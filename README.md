@@ -19,13 +19,13 @@ Se já existe um dispositivo, configure `ACCESS_GATEWAY_DEVICE_ID` com seu UUID 
 
 ## Execução
 
-Execute a partir da raiz de `C:\workspace\acess-project`:
+Execute a partir deste repositório:
 
 ```powershell
-python simulator/device-simulator/main.py --scenario valid
-python simulator/device-simulator/main.py --scenario duplicate
-python simulator/device-simulator/main.py --scenario invalid
-python simulator/device-simulator/main.py --scenario invalid-key
+python main.py --scenario valid
+python main.py --scenario duplicate
+python main.py --scenario invalid
+python main.py --scenario invalid-key
 ```
 
 Use `--base-url http://host:porta` se o backend não estiver em `http://localhost:8080`.
@@ -61,5 +61,5 @@ O simulador gera um `externalEventId` e uma `credentialRef` novos em cada execu�
 Os testes usam um servidor HTTP local simulado e não precisam do backend:
 
 ```powershell
-python -m unittest discover -s simulator/device-simulator -p 'test_*.py' -v
+python -m unittest discover -s . -p 'test_*.py' -v
 ```
