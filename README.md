@@ -63,3 +63,16 @@ Os testes usam um servidor HTTP local simulado e não precisam do backend:
 ```powershell
 python -m unittest discover -s . -p 'test_*.py' -v
 ```
+
+## Padrão de documentação e configuração
+
+Este repositório existe para simular dispositivos e eventos para validação do Access Gateway. O README acima apresenta o escopo, a arquitetura e as tecnologias específicas do projeto; esta seção padroniza o ponto de entrada para quem deseja reproduzi-lo localmente.
+
+### Clonar e configurar
+
+~~~powershell
+git clone https://github.com/Ivictors/device-simulator.git
+cd device-simulator
+~~~
+
+Consulte os pré-requisitos e comandos de execução descritos neste README antes de iniciar. Use variáveis de ambiente, arquivos locais ignorados pelo Git e serviços de desenvolvimento para credenciais; não substitua placeholders por segredos no README e não versione chaves, tokens ou senhas.
