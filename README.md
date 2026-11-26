@@ -15,6 +15,16 @@ $env:ACCESS_GATEWAY_DEVICE_ID = $registration.device.id
 $env:ACCESS_GATEWAY_DEVICE_KEY = $registration.apiKey
 ```
 
+Cadastre uma referência e atribua-a ao dispositivo antes de enviar eventos. Use um valor de demonstração exclusivo para cada execução:
+
+```powershell
+$env:ACCESS_GATEWAY_CREDENTIAL_REF = 'SIM-' + [guid]::NewGuid().ToString('N')
+$headers = @{ Authorization = "Bearer $env:ACCESS_GATEWAY_ADMIN_TOKEN" }
+$body = @{ credentialRef = $env:ACCESS_GATEWAY_CREDENTIAL_REF } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri 'http://localhost:8080/credential-refs' -Headers $headers -ContentType 'application/json' -Body $body
+Invoke-RestMethod -Method Post -Uri "http://localhost:8080/devices/$env:ACCESS_GATEWAY_DEVICE_ID/credential-refs" -Headers $headers -ContentType 'application/json' -Body $body
+```
+
 Se já existe um dispositivo, configure `ACCESS_GATEWAY_DEVICE_ID` com seu UUID e `ACCESS_GATEWAY_DEVICE_KEY` com sua chave. `ACCESS_GATEWAY_ADMIN_TOKEN` também é obrigatório: o backend só permite consultar `GET /devices/{deviceId}/events` com o token administrativo. Não coloque essas credenciais em arquivos versionados nem em argumentos de linha de comando.
 
 ## Execução
@@ -54,7 +64,7 @@ Exemplo ilustrativo, não uma execução já realizada:
 [RESULT] PASS
 ```
 
-O simulador gera um `externalEventId` e uma `credentialRef` novos em cada execução. A contagem de registros é filtrada pelo `externalEventId` enviado. O histórico da API é limitado aos 100 eventos mais recentes por `occurredAt`; se o dispositivo já tiver mais de 100 eventos com horários posteriores ao evento enviado, a verificação pode falhar mesmo com a gravação correta. Nesse caso, use um dispositivo de demonstração com histórico adequado. O programa sai com código `0` em caso de sucesso e `1` em caso de falha.
+O simulador gera um `externalEventId` novo em cada execução e usa a `ACCESS_GATEWAY_CREDENTIAL_REF` cadastrada e atribuída ao dispositivo. A contagem de registros é filtrada pelo `externalEventId` enviado. O histórico da API é limitado aos 100 eventos mais recentes por `occurredAt`; se o dispositivo já tiver mais de 100 eventos com horários posteriores ao evento enviado, a verificação pode falhar mesmo com a gravação correta. Nesse caso, use um dispositivo de demonstração com histórico adequado. O programa sai com código `0` em caso de sucesso e `1` em caso de falha.
 
 ## Testes locais
 
