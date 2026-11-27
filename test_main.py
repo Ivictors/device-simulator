@@ -8,6 +8,7 @@ import unittest
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 
@@ -78,6 +79,7 @@ class SimulatorTests(unittest.TestCase):
             "ACCESS_GATEWAY_DEVICE_ID": self.device_id,
             "ACCESS_GATEWAY_DEVICE_KEY": "device-secret",
             "ACCESS_GATEWAY_ADMIN_TOKEN": admin_token,
+            "ACCESS_GATEWAY_CREDENTIAL_REF": "assigned-card",
         }), contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
             code = simulator.main(["--scenario", scenario, "--base-url", self.base_url])
         return code, stdout.getvalue(), stderr.getvalue()
@@ -117,6 +119,16 @@ class SimulatorTests(unittest.TestCase):
             code, _, error = self.run_scenario("valid")
         self.assertEqual(1, code)
         self.assertIn("HTTP request failed", error)
+
+    def test_missing_assigned_credential_is_rejected_before_http(self):
+        with patch.dict(os.environ, {
+            "ACCESS_GATEWAY_DEVICE_ID": self.device_id,
+            "ACCESS_GATEWAY_DEVICE_KEY": "device-secret",
+            "ACCESS_GATEWAY_ADMIN_TOKEN": "admin-secret",
+            "ACCESS_GATEWAY_CREDENTIAL_REF": "",
+        }):
+            with self.assertRaisesRegex(simulator.SimulatorError, "ACCESS_GATEWAY_CREDENTIAL_REF"):
+                simulator.config_from_environment(SimpleNamespace(base_url=self.base_url))
 
 
 if __name__ == "__main__":

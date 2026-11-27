@@ -55,10 +55,12 @@ def config_from_environment(args):
     device_id = os.environ.get("ACCESS_GATEWAY_DEVICE_ID", "").strip()
     device_key = os.environ.get("ACCESS_GATEWAY_DEVICE_KEY", "").strip()
     admin_token = os.environ.get("ACCESS_GATEWAY_ADMIN_TOKEN", "").strip()
+    credential_ref = os.environ.get("ACCESS_GATEWAY_CREDENTIAL_REF", "").strip()
     missing = [name for name, value in (
         ("ACCESS_GATEWAY_DEVICE_ID", device_id),
         ("ACCESS_GATEWAY_DEVICE_KEY", device_key),
         ("ACCESS_GATEWAY_ADMIN_TOKEN", admin_token),
+        ("ACCESS_GATEWAY_CREDENTIAL_REF", credential_ref),
     ) if not value]
     if missing:
         raise SimulatorError("missing environment variable(s): " + ", ".join(missing))
@@ -71,17 +73,17 @@ def config_from_environment(args):
     parsed = urlsplit(base_url)
     if parsed.scheme not in ("http", "https") or not parsed.netloc or parsed.path or parsed.query or parsed.fragment:
         raise SimulatorError("--base-url must be an HTTP(S) origin, without a path or query")
-    return base_url, device_id, device_key, admin_token
+    return base_url, device_id, device_key, admin_token, credential_ref
 
 
 def run(args):
-    base_url, device_id, device_key, admin_token = config_from_environment(args)
+    base_url, device_id, device_key, admin_token, credential_ref = config_from_environment(args)
     external_id = "EVT-" + uuid.uuid4().hex.upper()
     event = {
         "deviceId": device_id,
         "externalEventId": external_id,
         "eventType": "ACCESS_GRANTED",
-        "credentialRef": "SIM-" + uuid.uuid4().hex.upper(),
+        "credentialRef": credential_ref,
         "occurredAt": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
     }
     if args.scenario == "invalid":
