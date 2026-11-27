@@ -25,7 +25,7 @@ Invoke-RestMethod -Method Post -Uri 'http://localhost:8080/credential-refs' -Hea
 Invoke-RestMethod -Method Post -Uri "http://localhost:8080/devices/$env:ACCESS_GATEWAY_DEVICE_ID/credential-refs" -Headers $headers -ContentType 'application/json' -Body $body
 ```
 
-Se já existe um dispositivo, configure `ACCESS_GATEWAY_DEVICE_ID` com seu UUID e `ACCESS_GATEWAY_DEVICE_KEY` com sua chave. `ACCESS_GATEWAY_ADMIN_TOKEN` também é obrigatório: o backend só permite consultar `GET /devices/{deviceId}/events` com o token administrativo. Não coloque essas credenciais em arquivos versionados nem em argumentos de linha de comando.
+Se já existe um dispositivo, configure `ACCESS_GATEWAY_DEVICE_ID` com seu UUID e `ACCESS_GATEWAY_DEVICE_KEY` com sua chave. No modo anterior, `ACCESS_GATEWAY_ADMIN_TOKEN` permite consultar o histórico. No modo OIDC, defina `ACCESS_GATEWAY_ADMIN_BEARER` com um token de acesso do Keycloak que tenha o papel `access-admin` e a audiência `access-gateway`. Esse token tem validade curta; obtenha-o por um fluxo de login autorizado. Para exercitar apenas o envio do dispositivo, use `--skip-history` sem credencial administrativa. Não coloque credenciais em arquivos versionados nem em argumentos de linha de comando.
 
 ## Execução
 
@@ -36,6 +36,7 @@ python main.py --scenario valid
 python main.py --scenario duplicate
 python main.py --scenario invalid
 python main.py --scenario invalid-key
+python main.py --scenario valid --skip-history
 ```
 
 Use `--base-url http://host:porta` se o backend não estiver em `http://localhost:8080`.
