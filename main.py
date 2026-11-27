@@ -54,14 +54,16 @@ def expect_status(actual, expected):
 def config_from_environment(args):
     device_id = os.environ.get("ACCESS_GATEWAY_DEVICE_ID", "").strip()
     device_key = os.environ.get("ACCESS_GATEWAY_DEVICE_KEY", "").strip()
-    admin_token = os.environ.get("ACCESS_GATEWAY_ADMIN_TOKEN", "").strip()
+    admin_token = (os.environ.get("ACCESS_GATEWAY_ADMIN_BEARER", "") or
+                   os.environ.get("ACCESS_GATEWAY_ADMIN_TOKEN", "")).strip()
     credential_ref = os.environ.get("ACCESS_GATEWAY_CREDENTIAL_REF", "").strip()
     missing = [name for name, value in (
         ("ACCESS_GATEWAY_DEVICE_ID", device_id),
         ("ACCESS_GATEWAY_DEVICE_KEY", device_key),
-        ("ACCESS_GATEWAY_ADMIN_TOKEN", admin_token),
         ("ACCESS_GATEWAY_CREDENTIAL_REF", credential_ref),
     ) if not value]
+    if not getattr(args, "skip_history", False) and not admin_token:
+        missing.append("ACCESS_GATEWAY_ADMIN_BEARER or ACCESS_GATEWAY_ADMIN_TOKEN")
     if missing:
         raise SimulatorError("missing environment variable(s): " + ", ".join(missing))
     try:
@@ -114,6 +116,10 @@ def run(args):
             first_response = response
         print()
 
+    if args.skip_history:
+        print("[RESULT] Event response checked; history lookup skipped")
+        return
+
     print(f"[{attempts + 1}] Querying event history")
     path = f"/devices/{quote(device_id)}/events?limit=100"
     history_status, raw = request_json(base_url, path, admin_token)
@@ -134,6 +140,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scenario", choices=("valid", "duplicate", "invalid", "invalid-key"), required=True)
     parser.add_argument("--base-url", default="http://localhost:8080")
+    parser.add_argument("--skip-history", action="store_true",
+                        help="Check the device response without an administrative history query")
     args = parser.parse_args(argv)
     try:
         run(args)

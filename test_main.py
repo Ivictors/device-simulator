@@ -73,15 +73,19 @@ class SimulatorTests(unittest.TestCase):
         self.server.server_close()
         self.thread.join()
 
-    def run_scenario(self, scenario, admin_token="admin-secret"):
+    def run_scenario(self, scenario, admin_token="admin-secret", bearer="", skip_history=False):
         stdout, stderr = io.StringIO(), io.StringIO()
         with patch.dict(os.environ, {
             "ACCESS_GATEWAY_DEVICE_ID": self.device_id,
             "ACCESS_GATEWAY_DEVICE_KEY": "device-secret",
             "ACCESS_GATEWAY_ADMIN_TOKEN": admin_token,
+            "ACCESS_GATEWAY_ADMIN_BEARER": bearer,
             "ACCESS_GATEWAY_CREDENTIAL_REF": "assigned-card",
         }), contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
-            code = simulator.main(["--scenario", scenario, "--base-url", self.base_url])
+            arguments = ["--scenario", scenario, "--base-url", self.base_url]
+            if skip_history:
+                arguments.append("--skip-history")
+            code = simulator.main(arguments)
         return code, stdout.getvalue(), stderr.getvalue()
 
     def test_all_scenarios(self):
@@ -107,6 +111,23 @@ class SimulatorTests(unittest.TestCase):
         code, _, error = self.run_scenario("valid", admin_token="wrong-admin")
         self.assertEqual(1, code)
         self.assertIn("expected HTTP 200, received HTTP 401", error)
+
+    def test_oidc_bearer_can_replace_legacy_admin_token(self):
+        code, output, error = self.run_scenario("valid", admin_token="", bearer="admin-secret")
+        self.assertEqual(0, code, error)
+        self.assertIn("Persisted records: 1", output)
+
+    def test_device_only_mode_does_not_require_admin_token(self):
+        code, output, error = self.run_scenario("valid", admin_token="", skip_history=True)
+        self.assertEqual(0, code, error)
+        self.assertIn("history lookup skipped", output)
+        self.assertEqual(1, len(self.server.events))
+
+    def test_history_requires_admin_token_by_default(self):
+        code, _, error = self.run_scenario("valid", admin_token="")
+        self.assertEqual(1, code)
+        self.assertIn("ACCESS_GATEWAY_ADMIN_BEARER or ACCESS_GATEWAY_ADMIN_TOKEN", error)
+        self.assertEqual(0, len(self.server.events))
 
     def test_unexpected_event_status_fails(self):
         self.server.force_event_status = 500
